@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApiAutores.Entidades;
+using WebApiAutores.Servicios;
 
 namespace WebApiAutores.Controllers
 {
@@ -9,16 +10,39 @@ namespace WebApiAutores.Controllers
     public class AutoresController : ControllerBase
     {
         private readonly ApplicationDbContext context;
+        private readonly IServicio servicio;
+        private readonly ServicioTransient servicioTransient;
+        private readonly ServicioScope servicioScope;
+        private readonly ServicioSingleton servicioSingleton;
 
-        public AutoresController(ApplicationDbContext context)
+        public AutoresController(ApplicationDbContext context,IServicio servicio,
+            ServicioTransient servicioTransient,ServicioScope servicioScope,ServicioSingleton servicioSingleton)
         {
             this.context = context;
+            this.servicio = servicio;
+            this.servicioTransient = servicioTransient;
+            this.servicioScope = servicioScope;
+            this.servicioSingleton = servicioSingleton;
         }
+        [HttpGet("GUID")]
+        public ActionResult ObtenerGuids()
+        {
+            return Ok(new {
+                AutoresController_Transient=servicioTransient.guid,
+                ServicosA_Transient = servicio.ObtenerTransient(),
+                AutoresController_Singleton =servicioSingleton.guid,
+                ServiciosA_Singleton = servicio.ObtenerSingleton(),
+                AutoresController_Scoped =servicioScope.guid,
+                ServiciosA_Scoper=servicio.ObtenerScoped()
+            });
+        }
+
         [HttpGet]
         [HttpGet("listado")]
         [HttpGet("/listado")]
         public async Task<ActionResult<List<Autor>>>Get()
         {
+            servicio.RealizarTarea();
             return await context.Autores.Include(x=>x.Libros).ToListAsync();
         }
         [HttpGet("Primero")]
