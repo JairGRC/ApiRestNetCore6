@@ -5,7 +5,7 @@ using WebApiAutores.Entidades;
 namespace WebApiAutores.Controllers
 {
     [ApiController]
-    [Route("api/autores")]
+    [Route("api/[controller]")]
     public class AutoresController : ControllerBase
     {
         private readonly ApplicationDbContext context;
@@ -15,13 +15,49 @@ namespace WebApiAutores.Controllers
             this.context = context;
         }
         [HttpGet]
+        [HttpGet("listado")]
+        [HttpGet("/listado")]
         public async Task<ActionResult<List<Autor>>>Get()
         {
             return await context.Autores.Include(x=>x.Libros).ToListAsync();
         }
-
+        [HttpGet("Primero")]
+        public async Task<ActionResult<Autor>> PrimerAutor([FromHeader] int miValor, [FromQuery] string nombre)
+        {
+            return await context.Autores.FirstOrDefaultAsync();
+        }
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<Autor>> Get(int id)
+        {
+            var autor = await context.Autores.FirstOrDefaultAsync(x => x.Id == id);
+            if (autor is null)
+            {
+                return NotFound();
+            }
+            return autor;
+        }
+        [HttpGet("{nombre}")]
+        public async Task<ActionResult<Autor>> Get([FromRoute]string nombre)
+        {
+            var autor = await context.Autores.FirstOrDefaultAsync(x => x.Nombre.Contains(nombre));
+            if (autor is null)
+            {
+                return NotFound();
+            }
+            return autor;
+        }
+        [HttpGet("{id:int}/{nombre?}")]
+        public async Task<ActionResult<Autor>> Get(int id,string nombre)
+        {
+            var autor = await context.Autores.FirstOrDefaultAsync(x => x.Id == id);
+            if (autor is null)
+            {
+                return NotFound();
+            }
+            return autor;
+        }
         [HttpPost]
-        public async Task<ActionResult>Post (Autor autor)
+        public async Task<ActionResult>Post ([FromBody]Autor autor)
         {
             context.Add(autor);
             await context.SaveChangesAsync();
