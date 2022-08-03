@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using WebApiAutores.Controllers;
+using WebApiAutores.Filtros;
 using WebApiAutores.Middlewars;
 using WebApiAutores.Servicios;
 
@@ -22,7 +23,10 @@ namespace WebApiAutores
         {
 
             //Configuracion de Servicio para ignorar ciclos 
-            services.AddControllers().AddJsonOptions(x =>
+            services.AddControllers(opciones =>
+            {
+                opciones.Filters.Add(typeof(FiltroDeExcepcion));
+            }).AddJsonOptions(x =>
             x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
             services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(Configuration.GetConnectionString("defaultConnection")));
@@ -38,7 +42,8 @@ namespace WebApiAutores
             services.AddTransient<ServicioTransient>();
             services.AddScoped<ServicioScope>();
             services.AddSingleton<ServicioSingleton>();
-
+            //Filtro de accion
+            services.AddTransient<MiFiltroDeAccion>();
             // Servicios de cache
             services.AddResponseCaching();
 
