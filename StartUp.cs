@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using WebApiAutores.Controllers;
@@ -38,6 +39,12 @@ namespace WebApiAutores
             services.AddScoped<ServicioScope>();
             services.AddSingleton<ServicioSingleton>();
 
+            // Servicios de cache
+            services.AddResponseCaching();
+
+            //Servicio de autentificacion
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebApiAutores", Version = "v1" });
@@ -67,6 +74,9 @@ namespace WebApiAutores
             app.UseHttpsRedirection();
             app.UseRouting();
 
+            //Filtro para cache 
+            app.UseResponseCaching();
+           
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

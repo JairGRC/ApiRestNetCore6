@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApiAutores.Entidades;
 using WebApiAutores.Servicios;
@@ -7,6 +8,7 @@ namespace WebApiAutores.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class AutoresController : ControllerBase
     {
         private readonly ApplicationDbContext context;
@@ -28,6 +30,7 @@ namespace WebApiAutores.Controllers
             this.logger = logger;
         }
         [HttpGet("GUID")]
+        [ResponseCache(Duration =10)]
         public ActionResult ObtenerGuids()
         {
             return Ok(new {
@@ -43,7 +46,7 @@ namespace WebApiAutores.Controllers
         [HttpGet]
         [HttpGet("listado")]
         [HttpGet("/listado")]
-
+        [ResponseCache(Duration = 10)]
         /*Rango de algunos metodos de logger
          * 
          *      Critical
