@@ -14,15 +14,18 @@ namespace WebApiAutores.Controllers
         private readonly ServicioTransient servicioTransient;
         private readonly ServicioScope servicioScope;
         private readonly ServicioSingleton servicioSingleton;
+        private readonly ILogger<AutoresController> logger;
 
         public AutoresController(ApplicationDbContext context,IServicio servicio,
-            ServicioTransient servicioTransient,ServicioScope servicioScope,ServicioSingleton servicioSingleton)
+            ServicioTransient servicioTransient,ServicioScope servicioScope
+            ,ServicioSingleton servicioSingleton,ILogger<AutoresController> logger)
         {
             this.context = context;
             this.servicio = servicio;
             this.servicioTransient = servicioTransient;
             this.servicioScope = servicioScope;
             this.servicioSingleton = servicioSingleton;
+            this.logger = logger;
         }
         [HttpGet("GUID")]
         public ActionResult ObtenerGuids()
@@ -40,8 +43,22 @@ namespace WebApiAutores.Controllers
         [HttpGet]
         [HttpGet("listado")]
         [HttpGet("/listado")]
+
+        /*Rango de algunos metodos de logger
+         * 
+         *      Critical
+         *      Error
+         *      Warning
+         *      Information
+         *      Debug
+         *      Trace
+         *      
+         */
         public async Task<ActionResult<List<Autor>>>Get()
         {
+            logger.LogInformation("Estamos obteniendo los autores");
+            logger.LogWarning("Estte msj es de prueba");
+
             servicio.RealizarTarea();
             return await context.Autores.Include(x=>x.Libros).ToListAsync();
         }
