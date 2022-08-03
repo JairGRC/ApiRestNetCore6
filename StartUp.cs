@@ -42,12 +42,41 @@ namespace WebApiAutores
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebApiAutores", Version = "v1" });
             });
         }
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env,ILogger<StartUp> logger)
         {
+            //Middleware  app.Use...
+            app.Use(async (contexto, siguiente) =>
+            {
+                using (var ms=new MemoryStream())
+                {
+                    var cuerpoOriginalRespuestA = contexto.Response.Body;
+                    contexto.Response.Body = ms;
+                    await siguiente.Invoke();
+
+                    ms.Seek(0, SeekOrigin.Begin);
+                    string respuesta=new StreamReader(ms).ReadToEnd();
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    await ms.CopyToAsync(cuerpoOriginalRespuestA);
+                    contexto.Response.Body = cuerpoOriginalRespuestA;
+
+                    logger.LogInformation(respuesta);
+
+                }
+            });
+            app.Map("/ruta1", app =>
+            {
+                app.Run(async contextor =>
+                {
+                    await contextor.Response.WriteAsync("Estoy interceptando la tuberia");
+                });
+
+            });
+            
             if (env.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c=>c.SwaggerEndpoint("/swagger/v1/swagger.json","WebAPIAutores V1"));
             }
 
             app.UseHttpsRedirection();
