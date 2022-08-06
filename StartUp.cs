@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 using WebApiAutores.Controllers;
 using WebApiAutores.Filtros;
 using WebApiAutores.Middlewars;
-using WebApiAutores.Servicios;
+
 
 namespace WebApiAutores
 {
@@ -36,18 +36,8 @@ namespace WebApiAutores
             //AddTransient => Nueva Instancia de la clase <A,B> servicio B
             //AddScoped => tiempo de vida de la clase servicio B aumenta, la misma Instancia (El mismo cliente)
             //AddSingleton => La misma instancia para distintos usuarios 
-            services.AddTransient<IServicio, ServicioA>();
-            //services.AddTransient<ServicioA>();
+           
 
-            services.AddTransient<ServicioTransient>();
-            services.AddScoped<ServicioScope>();
-            services.AddSingleton<ServicioSingleton>();
-            //Filtro de accion
-            services.AddTransient<MiFiltroDeAccion>();
-
-            services.AddHostedService<EscribirEnArchivo>();
-            // Servicios de cache
-            services.AddResponseCaching();
 
             //Servicio de autentificacion
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
@@ -56,6 +46,7 @@ namespace WebApiAutores
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebApiAutores", Version = "v1" });
             });
+            services.AddAutoMapper(typeof(StartUp));
         }
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env,ILogger<StartUp> logger)
         {
@@ -63,14 +54,7 @@ namespace WebApiAutores
 
             //app.UseMiddleware<LoguearRespuestaHTTPMiddleware>();
             app.UseLoguearRespuestaHTTP();
-            app.Map("/ruta1", app =>
-            {
-                app.Run(async contextor =>
-                {
-                    await contextor.Response.WriteAsync("Estoy interceptando la tuberia");
-                });
-
-            });
+            
             
             if (env.IsDevelopment())
             {
@@ -81,8 +65,6 @@ namespace WebApiAutores
             app.UseHttpsRedirection();
             app.UseRouting();
 
-            //Filtro para cache 
-            app.UseResponseCaching();
            
             app.UseAuthorization();
 

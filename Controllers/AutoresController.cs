@@ -1,117 +1,63 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebApiAutores.DTOs;
 using WebApiAutores.Entidades;
 using WebApiAutores.Filtros;
-using WebApiAutores.Servicios;
+
 
 namespace WebApiAutores.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    //[Authorize]
+    //[Authorize] 
     public class AutoresController : ControllerBase
     {
         private readonly ApplicationDbContext context;
-        private readonly IServicio servicio;
-        private readonly ServicioTransient servicioTransient;
-        private readonly ServicioScope servicioScope;
-        private readonly ServicioSingleton servicioSingleton;
-        private readonly ILogger<AutoresController> logger;
+        private readonly IMapper mapper;
 
-        public AutoresController(ApplicationDbContext context,IServicio servicio,
-            ServicioTransient servicioTransient,ServicioScope servicioScope
-            ,ServicioSingleton servicioSingleton,ILogger<AutoresController> logger)
+        public AutoresController(ApplicationDbContext context,IMapper mapper)
         {
             this.context = context;
-            this.servicio = servicio;
-            this.servicioTransient = servicioTransient;
-            this.servicioScope = servicioScope;
-            this.servicioSingleton = servicioSingleton;
-            this.logger = logger;
+            this.mapper = mapper;
         }
-        [HttpGet("GUID")]
-        //[ResponseCache(Duration = 10)]
-        [ServiceFilter(typeof(MiFiltroDeAccion))]
-        public ActionResult ObtenerGuids()
-        {
-            return Ok(new {
-                AutoresController_Transient=servicioTransient.guid,
-                ServicosA_Transient = servicio.ObtenerTransient(),
-                AutoresController_Singleton =servicioSingleton.guid,
-                ServiciosA_Singleton = servicio.ObtenerSingleton(),
-                AutoresController_Scoped =servicioScope.guid,
-                ServiciosA_Scoper=servicio.ObtenerScoped()
-            });
-        }
-
+        
         [HttpGet]
-        [HttpGet("listado")]
-        [HttpGet("/listado")]
-        //[ResponseCache(Duration = 10)]
-        [ServiceFilter(typeof(MiFiltroDeAccion))]
-        /*Rango de algunos metodos de logger
-         * 
-         *      Critical
-         *      Error
-         *      Warning
-         *      Information
-         *      Debug
-         *      Trace
-         *      
-         */
-        public async Task<ActionResult<List<Autor>>>Get()
-        {
-            throw new NotImplementedException();
-            logger.LogInformation("Estamos obteniendo los autores");
-            logger.LogWarning("Estte msj es de prueba");
 
-            servicio.RealizarTarea();
-            return await context.Autores.Include(x=>x.Libros).ToListAsync();
-        }
-        [HttpGet("Primero")]
-        public async Task<ActionResult<Autor>> PrimerAutor([FromHeader] int miValor, [FromQuery] string nombre)
+        public async Task<ActionResult<List<AutorDTO>>>Get()
         {
-            return await context.Autores.FirstOrDefaultAsync();
+            var autores= await context.Autores.ToListAsync();
+            return mapper.Map<List<AutorDTO>>(autores);
         }
+
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Autor>> Get(int id)
+        public async Task<ActionResult<AutorDTO>> Get(int id)
         {
             var autor = await context.Autores.FirstOrDefaultAsync(x => x.Id == id);
-            if (autor is null)
+            if(autor is null)
             {
                 return NotFound();
             }
-            return autor;
+            return mapper.Map<AutorDTO>(autor); 
         }
         [HttpGet("{nombre}")]
-        public async Task<ActionResult<Autor>> Get([FromRoute]string nombre)
+        public async Task<ActionResult<List<AutorDTO>>> Get([FromRoute]string nombre)
         {
-            var autor = await context.Autores.FirstOrDefaultAsync(x => x.Nombre.Contains(nombre));
-            if (autor is null)
-            {
-                return NotFound();
-            }
-            return autor;
+            var autores = await context.Autores.Where(x => x.Nombre.Contains(nombre)).ToListAsync();
+            return mapper.Map<List<AutorDTO>>(autores);
+
         }
-        [HttpGet("{id:int}/{nombre?}")]
-        public async Task<ActionResult<Autor>> Get(int id,string nombre)
-        {
-            var autor = await context.Autores.FirstOrDefaultAsync(x => x.Id == id);
-            if (autor is null)
-            {
-                return NotFound();
-            }
-            return autor;
-        }
+        
         [HttpPost]
-        public async Task<ActionResult>Post ([FromBody]Autor autor)
+        public async Task<ActionResult>Post ([FromBody]AutorCreacionDTO autorCreacionDTO)
         {
-            var existeAutorName = await context.Autores.AnyAsync(x => x.Nombre == autor.Nombre);
+            var existeAutorName = await context.Autores.AnyAsync(x => x.Nombre == autorCreacionDTO.Nombre);
             if (existeAutorName)
             {
-                return BadRequest($"Ya existe un autor con el nombre: {autor.Nombre}");
+                return BadRequest($"Ya existe un autor con el nombre: {autorCreacionDTO.Nombre}");
             }
+            var autor = mapper.Map<Autor>(autorCreacionDTO);
             context.Add(autor);
             await context.SaveChangesAsync();
             return Ok();
